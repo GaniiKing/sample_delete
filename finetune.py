@@ -7,6 +7,10 @@ import torch
 # =========================
 model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
+
+print(model_name)
+
+
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_quant_type="nf4",
