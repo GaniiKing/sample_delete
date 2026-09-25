@@ -1,0 +1,27 @@
+clusters table:
+    -id (INT PRIMARY KEY)
+    -main_cluster (TEXT)
+    -sub_cluster (TEXT)
+    -sub_sub_cluster (TEXT)
+
+memories table:
+    -id (INT PRIMARY KEY)
+    -user_input (TEXT)
+    -ai_response (TEXT)
+    -importance (TEXT) → CONSIDER / NOT_CONSIDER
+    -memory_type (TEXT) → TEMPORARY / SHORT_TERM / LONG_TERM
+    -cluster_id (INT) → references clusters.id
+    -created_at (TIMESTAMP)
+    -updated_at (TIMESTAMP)
+    -expire_at (TIMESTAMP)
+    -priority (INT)
+    -tags (TEXT[])
+    -notes (TEXT)
+
+tags table:
+    -id (INT PRIMARY KEY)
+    -name (TEXT UNIQUE)
+    
+memory_tags table:
+    -memory_id (INT) → references memories.id
+    -tag_id (INT) → references tags.id

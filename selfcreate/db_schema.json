@@ -1,0 +1,103 @@
+{
+  "meta": {
+    "schema_version": "2.0.0",
+    "dialect": "postgresql",
+    "description": "Universal multimodal memory schema for selfcreate agent"
+  },
+  "tables": {
+    "user_profile": {
+      "type": "core",
+      "columns": {
+        "user_id": "UUID PRIMARY KEY",
+        "full_name": "TEXT",
+        "preferred_name": "TEXT",
+        "date_of_birth": "DATE",
+        "gender": "TEXT",
+        "email": "TEXT",
+        "phone": "TEXT",
+        "language_preference": "TEXT",
+        "timezone": "TEXT",
+        "country": "TEXT",
+        "city": "TEXT",
+        "created_at": "TIMESTAMPTZ",
+        "updated_at": "TIMESTAMPTZ"
+      }
+    },
+    "personal_memory": {
+      "type": "memory",
+      "columns": {
+        "memory_id": "BIGSERIAL PRIMARY KEY",
+        "user_id": "UUID",
+        "category": "TEXT",
+        "memory_key": "TEXT",
+        "memory_value": "TEXT",
+        "source_text": "TEXT",
+        "confidence": "DOUBLE PRECISION",
+        "importance_score": "DOUBLE PRECISION",
+        "memory_type": "TEXT",
+        "expires_at": "TIMESTAMPTZ",
+        "tags": "JSONB",
+        "created_at": "TIMESTAMPTZ",
+        "updated_at": "TIMESTAMPTZ"
+      },
+      "indexes": [
+        "CREATE INDEX IF NOT EXISTS idx_personal_memory_user_id ON personal_memory(user_id);",
+        "CREATE INDEX IF NOT EXISTS idx_personal_memory_memory_key ON personal_memory(memory_key);",
+        "CREATE INDEX IF NOT EXISTS idx_personal_memory_expires_at ON personal_memory(expires_at);"
+      ]
+    },
+    "interaction_log": {
+      "type": "audit",
+      "columns": {
+        "interaction_id": "BIGSERIAL PRIMARY KEY",
+        "user_id": "UUID",
+        "user_message": "TEXT",
+        "assistant_response": "TEXT",
+        "decision_should_store": "BOOLEAN",
+        "decision_reason": "TEXT",
+        "latency_ms": "INT",
+        "created_at": "TIMESTAMPTZ"
+      }
+    },
+    "face_memory": {
+      "type": "vision_identity",
+      "columns": {
+        "face_id": "TEXT PRIMARY KEY",
+        "user_id": "UUID",
+        "person_name": "TEXT",
+        "confidence": "DOUBLE PRECISION",
+        "last_snapshot_path": "TEXT",
+        "created_at": "TIMESTAMPTZ",
+        "updated_at": "TIMESTAMPTZ"
+      }
+    },
+    "media_input_log": {
+      "type": "multimodal_audit",
+      "columns": {
+        "media_id": "BIGSERIAL PRIMARY KEY",
+        "interaction_id": "BIGINT",
+        "input_mode": "TEXT",
+        "audio_text": "TEXT",
+        "video_snapshot_path": "TEXT",
+        "video_change_score": "DOUBLE PRECISION",
+        "video_significant_change": "BOOLEAN",
+        "faces_detected_count": "INT",
+        "faces_payload": "JSONB",
+        "created_at": "TIMESTAMPTZ"
+      }
+    }
+  },
+  "bootstrap_sql": [
+    "CREATE EXTENSION IF NOT EXISTS pgcrypto;",
+    "CREATE TABLE IF NOT EXISTS user_profile (user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(), full_name TEXT, preferred_name TEXT, date_of_birth DATE, gender TEXT, email TEXT, phone TEXT, language_preference TEXT, timezone TEXT, country TEXT, city TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());",
+    "CREATE TABLE IF NOT EXISTS personal_memory (memory_id BIGSERIAL PRIMARY KEY, user_id UUID REFERENCES user_profile(user_id), category TEXT NOT NULL, memory_key TEXT NOT NULL, memory_value TEXT NOT NULL, source_text TEXT, confidence DOUBLE PRECISION DEFAULT 0.0, importance_score DOUBLE PRECISION DEFAULT 0.0, memory_type TEXT NOT NULL CHECK (memory_type IN ('TEMPORARY','SHORT_TERM','LONG_TERM')), expires_at TIMESTAMPTZ, tags JSONB DEFAULT '[]'::jsonb, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());",
+    "CREATE TABLE IF NOT EXISTS interaction_log (interaction_id BIGSERIAL PRIMARY KEY, user_id UUID REFERENCES user_profile(user_id), user_message TEXT NOT NULL, assistant_response TEXT NOT NULL, decision_should_store BOOLEAN NOT NULL, decision_reason TEXT, latency_ms INT, created_at TIMESTAMPTZ DEFAULT NOW());",
+    "CREATE TABLE IF NOT EXISTS face_memory (face_id TEXT PRIMARY KEY, user_id UUID REFERENCES user_profile(user_id), person_name TEXT NOT NULL, confidence DOUBLE PRECISION DEFAULT 0.0, last_snapshot_path TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());",
+    "CREATE TABLE IF NOT EXISTS media_input_log (media_id BIGSERIAL PRIMARY KEY, interaction_id BIGINT REFERENCES interaction_log(interaction_id), input_mode TEXT NOT NULL, audio_text TEXT, video_snapshot_path TEXT, video_change_score DOUBLE PRECISION DEFAULT 0.0, video_significant_change BOOLEAN DEFAULT FALSE, faces_detected_count INT DEFAULT 0, faces_payload JSONB DEFAULT '[]'::jsonb, created_at TIMESTAMPTZ DEFAULT NOW());",
+    "CREATE INDEX IF NOT EXISTS idx_personal_memory_user_id ON personal_memory(user_id);",
+    "CREATE INDEX IF NOT EXISTS idx_personal_memory_memory_key ON personal_memory(memory_key);",
+    "CREATE INDEX IF NOT EXISTS idx_personal_memory_expires_at ON personal_memory(expires_at);",
+    "CREATE INDEX IF NOT EXISTS idx_face_memory_person_name ON face_memory(person_name);",
+    "CREATE INDEX IF NOT EXISTS idx_media_input_log_created_at ON media_input_log(created_at);"
+  ]
+}

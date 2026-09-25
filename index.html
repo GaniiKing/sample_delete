@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        /* Base reset and global styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f7;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Main container style */
+        .real-time-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        /* Control Panel */
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .control-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .control-label input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+
+        .control-label:hover {
+            color: #667eea;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* Video Section */
+        .video-section {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+        }
+
+        /* Message History Section */
+        .message-history-section {
+            width: 400px;
+            background: white;
+            border-left: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .message-history-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .message-history-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .message-history-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .message-history-content .scroller {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Message Items */
+        .item {
+            display: flex;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .item-left {
+            justify-content: flex-start;
+        }
+
+        .item-right {
+            justify-content: flex-end;
+        }
+
+        .item-content {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .item-left .item-content {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .item-right .item-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* Connection Log Panel */
+        .connection-log-panel {
+            height: 200px;
+            background: white;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .log-panel-header {
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-panel-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .log-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #f6f8fa;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .log-entry.info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .log-entry.success {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .log-entry.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .log-entry.warn {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        /* Clear Button */
+        .clear-btn {
+            padding: 6px 14px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+        }
+
+        /* Character container */
+        .ah-character-box {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ah-character-avatar {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* Character background */
+        .ah-character-bg {
+            display: none;
+        }
+
+        /* Call button */
+        .btn-character-call {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3);
+            z-index: 100;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-character-call:hover {
+            transform: translateX(-50%) scale(1.1);
+            box-shadow: 0 15px 25px rgba(118, 75, 162, 0.4);
+        }
+
+        /* Active state */
+        .btn-character-call.active {
+            background: linear-gradient(135deg, #ff5e62 0%, #ff9966 100%);
+        }
+
+        .ah-icon {
+            transition: all 0.3s ease;
+        }
+
+        /* Chat container - DEPRECATED, now using .scroller in message history panel */
+        /* .ah-character-chat {
+            position: fixed;
+            bottom: 110px;
+            left: 20px;
+            width: 350px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+        } */
+
+        .character-chat-item {
+            max-width: 90%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease-out;
+            margin-bottom: 8px;
+        }
+
+        .item-user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+            margin-left: auto;
+        }
+
+        .item-character {
+            align-self: flex-start;
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Scrollbar style */
+        .message-history-content::-webkit-scrollbar,
+        .log-panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .message-history-content::-webkit-scrollbar-track,
+        .log-panel-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        .message-history-content::-webkit-scrollbar-thumb,
+        .log-panel-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .message-history-content::-webkit-scrollbar-thumb:hover,
+        .log-panel-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Animation definition */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Typing animation */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 0;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: currentColor;
+            border-radius: 50%;
+            animation: typingAnimation 1.4s ease-in-out infinite;
+            opacity: 0.6;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.6;
+            }
+
+            30% {
+                transform: translateY(-8px);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .message-history-section {
+                width: 100%;
+                height: 300px;
+                border-left: none;
+                border-top: 1px solid rgba(0, 0, 0, 0.1);
+            }
+
+            .connection-log-panel {
+                height: 150px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .control-panel {
+                top: 10px;
+                left: 10px;
+                padding: 10px;
+            }
+
+            .control-group {
+                gap: 10px;
+            }
+
+            .control-label {
+                font-size: 12px;
+            }
+
+            .control-label span {
+                display: none;
+            }
+
+            /* .ah-character-chat - removed, now using .scroller */
+
+            .btn-character-call {
+                width: 50px;
+                height: 50px;
+                bottom: 20px;
+                /* left and transform inherited from parent style for center positioning */
+            }
+
+            .message-history-section {
+                height: 250px;
+            }
+
+            .connection-log-panel {
+                height: 120px;
+            }
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #e0e0e0;
+            }
+
+            .control-panel {
+                background: rgba(30, 30, 30, 0.95);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            }
+
+            .control-label {
+                color: #e0e0e0;
+            }
+
+            .control-label:hover {
+                color: #8b9ef8;
+            }
+
+            .message-history-section,
+            .connection-log-panel {
+                background: #1e1e1e;
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .message-history-header,
+            .log-panel-header {
+                background: #2d2d2d;
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .log-panel-content {
+                background: #1e1e1e;
+            }
+
+            .message-history-header h3,
+            .log-panel-header h3 {
+                color: #e0e0e0;
+            }
+
+            .item-character,
+            .item-left .item-content {
+                background: #2d2d2d;
+                color: #e0e0e0;
+            }
+
+            .log-entry.info {
+                background: #1a237e;
+                color: #64b5f6;
+            }
+
+            .log-entry.success {
+                background: #1b5e20;
+                color: #81c784;
+            }
+
+            .log-entry.error {
+                background: #b71c1c;
+                color: #ef5350;
+            }
+
+            .log-entry.warn {
+                background: #e65100;
+                color: #ffb74d;
+            }
+
+            /* .ah-character-chat - removed, now using .scroller */
+        }
+
+        /* Hide sections when toggled */
+        .hidden {
+            display: none !important;
+        }
+
+        /* ===== Smooth static ↔ video crossfade ===== */
+        #character-static-image,
+        #character-avatar-video {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 100%; height: 100%;
+            object-fit: contain;
+            transform: translate(-50%, -50%);
+            background: #000;
+            transition: opacity 0.5s ease;
+        }
+
+        #character-static-image {
+            opacity: 1;
+            z-index: 2;
+        }
+
+        #character-avatar-video {
+            opacity: 0;
+            z-index: 3;
+        }
+
+        /* Video visible state */
+        #character-avatar-video.video-active {
+            opacity: 1;
+        }
+
+        /* Static hidden while video is active */
+        #character-static-image.static-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ===== Lip-sync pulse overlay (used when only static image is shown) ===== */
+        #lipsync-overlay {
+            position: absolute;
+            bottom: 22%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        #lipsync-overlay.talking {
+            opacity: 1;
+        }
+
+        .lip-bar {
+            width: 5px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.85);
+            box-shadow: 0 0 6px rgba(102,126,234,0.8);
+            transform-origin: bottom;
+            animation: none;
+        }
+
+        #lipsync-overlay.talking .lip-bar {
+            animation: lipPulse 0.5s ease-in-out infinite alternate;
+        }
+
+        .lip-bar:nth-child(1) { height: 6px;  animation-delay: 0s;    animation-duration: 0.45s; }
+        .lip-bar:nth-child(2) { height: 10px; animation-delay: 0.07s; animation-duration: 0.38s; }
+        .lip-bar:nth-child(3) { height: 14px; animation-delay: 0.14s; animation-duration: 0.42s; }
+        .lip-bar:nth-child(4) { height: 10px; animation-delay: 0.21s; animation-duration: 0.36s; }
+        .lip-bar:nth-child(5) { height: 6px;  animation-delay: 0.28s; animation-duration: 0.44s; }
+
+        @keyframes lipPulse {
+            from { transform: scaleY(0.4); opacity: 0.6; }
+            to   { transform: scaleY(1.6); opacity: 1;   }
+        }
+
+        /* ===== Speaking ring around call button ===== */
+        .btn-character-call.speaking::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 3px solid rgba(102,126,234,0.7);
+            animation: speakingRing 1s ease-in-out infinite;
+        }
+
+        @keyframes speakingRing {
+            0%   { transform: scale(1);    opacity: 0.8; }
+            50%  { transform: scale(1.18); opacity: 0.3; }
+            100% { transform: scale(1);    opacity: 0.8; }
+        }
+
+        /* ===== Smooth typing indicator ===== */
+        @keyframes typingAnimation {
+            0%, 100% { transform: translateY(0);   opacity: 0.5; }
+            50%       { transform: translateY(-6px); opacity: 1;   }
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: 0s;    }
+        .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.30s; }
+    </style>
+
+</head>
+
+<body>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <div class="real-time-container">
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="control-group">
+                <label class="control-label">
+                    <input type="checkbox" id="toggleMessageHistory" checked>
+                    <span>Show Message History</span>
+                </label>
+                <label class="control-label">
+                    <input type="checkbox" id="toggleConnectionLog" checked>
+                    <span>Show Connection Log</span>
+                </label>
+                <label class="control-label">
+                    <input type="checkbox" id="toggleDetailedLog" checked>
+                    <span>Detailed Log Mode</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Left: Digital Human Video -->
+            <div class="video-section">
+                <div class="ah-character-box">
+                    <div class="ah-character-avatar" style="position: relative; overflow: hidden; width: 100%; height: 100%;">
+                        <!-- Static image displayed by default -->
+                        <img id="character-static-image" src="https://api.navtalk.ai/uploadFiles/2026-05-01/38822fac-396c-4d98-962e-b76f0277b319.png">
+
+                        <!-- Video playback element (fades in when stream arrives) -->
+                        <video id="character-avatar-video"
+                            poster="https://api.navtalk.ai/uploadFiles/2026-05-01/38822fac-396c-4d98-962e-b76f0277b319.png"
+                            autoplay
+                            playsinline></video>
+
+                        <!-- Lip-sync bars (shown over static image while AI is speaking) -->
+                        <div id="lipsync-overlay">
+                            <div class="lip-bar"></div>
+                            <div class="lip-bar"></div>
+                            <div class="lip-bar"></div>
+                            <div class="lip-bar"></div>
+                            <div class="lip-bar"></div>
+                        </div>
+                    </div>
+
+                    <!-- Call button -->
+                    <button class="ah-btn ah-btn-icon btn-character-call" id="btnRealtime">
+                        <svg class="ah-icon" width="22" height="22" viewBox="0 0 22 22" fill="#fff"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M20.0001 15.58C17.0001 13.176 16.1281 14.378 14.8186 15.689C13.8371 16.672 11.4371 14.651 9.41862 12.575C7.34612 10.4995 5.32862 8.04101 6.31012 7.16701C7.67362 5.80201 8.81912 4.98201 6.41912 1.97751C4.01912 -1.02649 2.38262 1.26751 1.07412 2.57851C-0.453385 4.10851 0.964616 9.78901 6.58262 15.4155C12.2006 20.9875 17.8731 22.4625 19.4006 20.933C20.7096 19.622 23.0551 17.983 20.0006 15.5795L20.0001 15.58Z" />
+                        </svg>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- Right: Message History -->
+            <div class="message-history-section" id="messageHistorySection">
+                <div class="message-history-header">
+                    <h3>Message History</h3>
+                    <button class="clear-btn" id="clearHistoryBtn">Clear History</button>
+                </div>
+                <div class="message-history-content" id="messageHistoryContent">
+                    <div class="scroller">
+                        <!-- Chat messages will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: Connection Log Panel -->
+        <div class="connection-log-panel" id="connectionLogPanel">
+            <div class="log-panel-header">
+                <h3>Connection & Call Log</h3>
+                <button class="clear-btn" id="clearLogBtn">Clear Log</button>
+            </div>
+            <div class="log-panel-content" id="logPanelContent"></div>
+        </div>
+    </div>
+</body>
+
+
+<script>
+    const NavTalkMessageType = Object.freeze({
+        CONNECTED_SUCCESS: "conversation.connected.success",
+        CONNECTED_WARNING: "conversation.connected.warning",
+        CONNECTED_FAIL: "conversation.connected.fail",
+        CONNECTED_CLOSE: "conversation.connected.close",
+        INSUFFICIENT_BALANCE: "conversation.connected.insufficient_balance",
+        WEB_RTC_OFFER: "webrtc.signaling.offer",
+        WEB_RTC_ANSWER: "webrtc.signaling.answer",
+        WEB_RTC_ICE_CANDIDATE: "webrtc.signaling.iceCandidate",
+
+        REALTIME_SESSION_CREATED: "realtime.session.created",
+        REALTIME_SESSION_UPDATED: "realtime.session.updated",
+
+        REALTIME_SPEECH_STARTED: "realtime.input_audio_buffer.speech_started",
+        REALTIME_SPEECH_STOPPED: "realtime.input_audio_buffer.speech_stopped",
+
+        REALTIME_CONVERSATION_ITEM_COMPLETED:
+            "realtime.conversation.item.input_audio_transcription.completed",
+
+        REALTIME_RESPONSE_AUDIO_TRANSCRIPT_DELTA:
+            "realtime.response.audio_transcript.delta",
+
+        REALTIME_RESPONSE_AUDIO_DELTA: "realtime.response.audio.delta",
+
+        REALTIME_RESPONSE_AUDIO_TRANSCRIPT_DONE:
+            "realtime.response.audio_transcript.done",
+
+        REALTIME_RESPONSE_AUDIO_DONE: "realtime.response.audio.done",
+
+        REALTIME_RESPONSE_FUNCTION_CALL_ARGUMENTS_DONE:
+            "realtime.response.function_call_arguments.done",
+
+        REALTIME_INPUT_AUDIO_BUFFER_APPEND: "realtime.input_audio_buffer.append",
+
+        REALTIME_INPUT_TEXT: "realtime.input_text",
+
+        REALTIME_INPUT_IMAGE: "realtime.input_image",
+
+        REALTIME_INPUT_CONFIG: "realtime.input_config",
+
+        UNKNOWN_TYPE: "unknow"
+    });
+
+    // ============ Global Variables ============
+    let isDetailedLogMode = false;
+    let messageHistory = [];
+    let connectionLogs = [];
+
+    // ============ Message History Functions ============
+    function appendMessageToHistory(role, content) {
+        const timestamp = new Date().toISOString();
+        const message = { role, content, timestamp };
+        messageHistory.push(message);
+        
+        // Save to localStorage
+        saveMessageHistory();
+        
+        // Render the message to message history panel (not to chat interface)
+        renderMessageToHistory(message);
+        scrollMessagesToBottom();
+    }
+    
+    // Save message to history without rendering (used when message already displayed in chat)
+    function saveMessageToHistory(role, content) {
+        const timestamp = new Date().toISOString();
+        const message = { role, content, timestamp };
+        messageHistory.push(message);
+        
+        // Save to localStorage
+        saveMessageHistory();
+    }
+
+    function renderMessageToHistory(message) {
+        const scroller = document.querySelector('#messageHistoryContent .scroller');
+        if (!scroller) return;
+
+        // Check if message already exists in history to avoid duplicates
+        const existingMessages = scroller.querySelectorAll('.item');
+        for (let existing of existingMessages) {
+            const existingContent = existing.querySelector('.item-content')?.textContent;
+            if (existingContent === message.content) {
+                return; // Message already rendered, skip
+            }
+        }
+
+        const item = document.createElement('div');
+        item.className = `item ${message.role === 'user' ? 'item-right' : 'item-left'}`;
+        
+        const content = document.createElement('div');
+        content.className = 'item-content';
+        content.textContent = message.content;
+        
+        item.appendChild(content);
+        scroller.appendChild(item);
+    }
+
+    function loadMessageHistoryFromStorage() {
+        try {
+            const stored = localStorage.getItem('realtimeChatHistory');
+            if (stored) {
+                messageHistory = JSON.parse(stored);
+                // Render all messages
+                const scroller = document.querySelector('#messageHistoryContent .scroller');
+                if (scroller) {
+                    scroller.innerHTML = '';
+                    messageHistory.forEach(msg => renderMessageToHistory(msg));
+                    scrollMessagesToBottom();
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load message history:', e);
+        }
+    }
+
+    function saveMessageHistory() {
+        try {
+            localStorage.setItem('realtimeChatHistory', JSON.stringify(messageHistory));
+        } catch (e) {
+            console.error('Failed to save message history:', e);
+        }
+    }
+
+    function clearMessageHistory() {
+        if (confirm('Are you sure you want to clear all message history?')) {
+            messageHistory = [];
+            localStorage.removeItem('realtimeChatHistory');
+            const scroller = document.querySelector('#messageHistoryContent .scroller');
+            if (scroller) {
+                scroller.innerHTML = '';
+            }
+            addConnectionLog('info', 'Message history cleared');
+        }
+    }
+
+    function scrollMessagesToBottom() {
+        const content = document.getElementById('messageHistoryContent');
+        if (content) {
+            content.scrollTop = content.scrollHeight;
+        }
+    }
+
+    // ============ Connection Log Functions ============
+    function addConnectionLog(level, message, details = null) {
+        const timestamp = new Date().toISOString();
+        const log = { level, message, details, timestamp };
+        connectionLogs.push(log);
+
+        // Keep only last 100 logs
+        if (connectionLogs.length > 100) {
+            connectionLogs.shift();
+        }
+
+        // Render the log
+        renderConnectionLog(log);
+    }
+
+    function renderConnectionLog(log) {
+        const logContent = document.getElementById('logPanelContent');
+        if (!logContent) return;
+
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${log.level}`;
+        
+        // Format: [timestamp] message
+        const timestamp = new Date(log.timestamp).toLocaleTimeString('en-US', { 
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        let text = `[${timestamp}] ${log.message}`;
+        
+        // Add details in detailed mode
+        if (log.details && isDetailedLogMode) {
+            text += ` | ${JSON.stringify(log.details)}`;
+        }
+        
+        entry.textContent = text;
+        
+        logContent.appendChild(entry);
+        logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    function clearConnectionLog() {
+        if (confirm('Are you sure you want to clear all connection logs?')) {
+            connectionLogs = [];
+            const logContent = document.getElementById('logPanelContent');
+            if (logContent) {
+                logContent.innerHTML = '';
+            }
+        }
+    }
+
+    function toggleLogDetailLevel() {
+        isDetailedLogMode = !isDetailedLogMode;
+        localStorage.setItem('detailedLogMode', JSON.stringify(isDetailedLogMode));
+        
+        // Re-render all logs
+        const logContent = document.getElementById('logPanelContent');
+        if (logContent) {
+            logContent.innerHTML = '';
+            connectionLogs.forEach(log => {
+                if (!isDetailedLogMode || (isDetailedLogMode && log.details)) {
+                    renderConnectionLog(log);
+                } else if (!log.details && !isDetailedLogMode) {
+                    renderConnectionLog(log);
+                }
+            });
+        }
+        
+        addConnectionLog('info', `Log mode switched to: ${isDetailedLogMode ? 'detailed' : 'simple'}`);
+    }
+
+    function formatLogTimestamp() {
+        return new Date().toISOString();
+    }
+
+    // ============ Control Panel Functions ============
+    function initControlPanel() {
+        // Load preferences
+        const messageHistoryVisible = localStorage.getItem('messageHistoryVisible') !== 'false';
+        const connectionLogVisible = localStorage.getItem('connectionLogVisible') !== 'false';
+        isDetailedLogMode = JSON.parse(localStorage.getItem('detailedLogMode') || 'false');
+        
+        // Set initial states
+        document.getElementById('toggleMessageHistory').checked = messageHistoryVisible;
+        document.getElementById('toggleConnectionLog').checked = connectionLogVisible;
+        document.getElementById('toggleDetailedLog').checked = isDetailedLogMode;
+        
+        // Apply initial visibility
+        toggleMessageHistoryVisibility(messageHistoryVisible);
+        toggleConnectionLogVisibility(connectionLogVisible);
+        
+        // Add event listeners
+        document.getElementById('toggleMessageHistory').addEventListener('change', (e) => {
+            toggleMessageHistoryVisibility(e.target.checked);
+            saveUserPreferences();
+        });
+        
+        document.getElementById('toggleConnectionLog').addEventListener('change', (e) => {
+            toggleConnectionLogVisibility(e.target.checked);
+            saveUserPreferences();
+        });
+        
+        document.getElementById('toggleDetailedLog').addEventListener('change', (e) => {
+            toggleLogDetailLevel();
+        });
+        
+        // Clear buttons
+        document.getElementById('clearHistoryBtn').addEventListener('click', clearMessageHistory);
+        document.getElementById('clearLogBtn').addEventListener('click', clearConnectionLog);
+        
+        // Load message history
+        loadMessageHistoryFromStorage();
+        
+        addConnectionLog('info', 'Control panel initialized');
+    }
+
+    function toggleMessageHistoryVisibility(visible) {
+        const section = document.getElementById('messageHistorySection');
+        if (section) {
+            if (visible) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+    }
+
+    function toggleConnectionLogVisibility(visible) {
+        const panel = document.getElementById('connectionLogPanel');
+        if (panel) {
+            if (visible) {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+    }
+
+    function saveUserPreferences() {
+        localStorage.setItem('messageHistoryVisible', 
+            document.getElementById('toggleMessageHistory').checked);
+        localStorage.setItem('connectionLogVisible', 
+            document.getElementById('toggleConnectionLog').checked);
+    }
+
+    // ❗You need to manually modify the following variables.
+    // ✒️ api key
+    const LICENSE = "sk_navtalk_pNhOL9XInFt2MCIUgONjvRiw53FaaEJf"
+
+    // ✒️ character name. Currently supported characters include: navtalk.Ethan, navtalk.Leo, navtalk.Emma, navtalk.Sophia, navtalk.Mia, navtalk.Chloe, navtalk.Zoe, navtalk.Ava
+    // You can check the specific images on the official website: https://console.navtalk.ai/login#/playground/realtime_digital_human.
+    const AVATAR_ID = "09cb74f3cd9a2521724813a30af00a8a"
+
+    // Global variable for connection state
+    let peerConnectionA = null;
+
+    let baseUrl = "wss://transfer.navtalk.ai/wss/v2/realtime-chat"
+
+    let configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+
+    // Digital human agent, real-time voice conversation button
+    async function initDigtalHumanRealtimeButton() {
+        // Initialize control panel first
+        initControlPanel();
+        
+        addConnectionLog('info', 'Initializing digital human realtime conversation');
+        
+        let realtimeChatHistory = await getFromChromeStorage("realtimeChatHistory");
+
+        async function getFromChromeStorage(key) {
+            return new Promise((resolve, reject) => {
+                // Use localStorage in normal web pages
+                const value = localStorage.getItem(key);
+                resolve(value !== null ? value : null);
+            });
+        }
+
+        realtimeChatHistory = JSON.parse(realtimeChatHistory);
+
+        // Render chat history
+        // renderRealtimeChatHistory();
+
+        const realtimeButton = document.getElementById('btnRealtime');
+        const conversationBg = document.querySelector('.conversation-bg'); // Select the entire div containing the background image
+
+        let socket;
+        let audioContext;
+        let audioProcessor;
+        let audioStream;
+        let currentAudioSource = null; // Currently playing audio source
+
+        // Get the stored digitalHumanLogId of the currently active character
+        let activeCharacterLogId = await getFromChromeStorage("digitalHumanLogId");
+        // const activeCharacter = realtimeChatHistory.find(character => character.digitalHumanLogId == activeCharacterLogId);
+
+        // Loading animation
+        let loading = document.querySelector('.ah-chat-loading');
+        let aiMessageElement;
+        // Define a variable to store accumulated transcript content
+        let accumulatedTranscript = '';
+
+        let audioQueue = []; // Used to store audio chunks
+        let isPlaying = false; // Flag to indicate whether audio is currently playing
+        // Use a Map to store the span element corresponding to each response_id
+        let responseSpans = new Map();
+
+        let playVideo = false;
+        // Define a buffer object to accumulate incomplete Markdown content
+        let markdownBuffer = new Map();
+        let pendingUserMessageSpan = null; // Store reference to user message placeholder
+
+
+
+        // Add more detailed logs in cleanupResources
+        async function cleanupResources() {
+            try {
+                console.log('Starting cleanup');
+
+                if (peerConnectionA) {
+                    console.log('Closing peerConnectionA');
+                    peerConnectionA.onicecandidate = null;
+                    peerConnectionA.close();
+                    peerConnectionA = null;  // Ensure it's completely reset
+                }
+
+                console.log('Tracks cleaned up');
+
+                const remoteVideo = document.getElementById('character-avatar-video');
+                if (remoteVideo) {
+                    remoteVideo.srcObject = null;
+                    remoteVideo.removeAttribute('src');
+                    remoteVideo.load();
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 100));
+                console.log('Cleanup complete');
+            } catch (err) {
+                console.error('Resource cleanup error:', err);
+            }
+        }
+
+        async function startWebSocket() {
+            // Retrieve license information from Chrome storage
+            const websocketUrlWithParams = `${baseUrl}?license=${LICENSE}&avatarId=${AVATAR_ID}`;
+
+            addConnectionLog('info', 'Initializing WebSocket connection', { url: baseUrl, avatarId: AVATAR_ID });
+
+            // Initialize the WebSocket connection
+            socket = new WebSocket(websocketUrlWithParams);
+            socket.binaryType = 'arraybuffer';
+
+            // Listen for WebSocket messages
+            socket.onmessage = (event) => {
+                if (typeof event.data === 'string') {
+                    try {
+                        // Parse and handle non-binary messages
+                        const data = JSON.parse(event.data);
+                        // console.log("data:"+JSON.stringify(data))
+                        if (isDetailedLogMode) {
+                            addConnectionLog('info', 'Message received', { type: data.type });
+                        }
+                        handleReceivedMessage(data);
+                    } catch (e) {
+                        console.error("Failed to parse JSON message:", e);
+                        addConnectionLog('error', 'Failed to parse message: ' + e.message);
+                    }
+                } else {
+                    console.warn("Unknown WebSocket message type");
+                    addConnectionLog('warn', 'Unknown WebSocket message type');
+                }
+            };
+
+            // Triggered when the WebSocket connection is successfully opened
+            socket.onopen = function () {
+                console.log("WebSocket connection established");
+                addConnectionLog('success', 'WebSocket connection established');
+            };
+
+            // Handle WebSocket errors
+            socket.onerror = function (error) {
+                // Clean up old connection
+                cleanupResources();
+                console.error("WebSocket error:", error);
+                addConnectionLog('error', 'WebSocket connection error', { error: error.toString() });
+            };
+
+            // Triggered when the WebSocket connection is closed
+            socket.onclose = async function (event) {
+                // Show an error message if points are insufficient
+                if (event.reason === 'Insufficient points') {
+                    showErrorTip("You need more points to complete this action.");
+                }
+                console.log("WebSocket connection closed", event.code, event.reason);
+                addConnectionLog('warn', 'WebSocket connection closed', { 
+                    code: event.code, 
+                    reason: event.reason,
+                    wasClean: event.wasClean 
+                });
+                
+                // Clean up old connection
+                await cleanupResources();
+
+                stopRecording();
+
+                // Update the points information
+
+                // Clear the span record elements
+                responseSpans = new Map();
+
+                console.log("WebSocket connection closed:");
+                console.log("  code:", event);
+                console.log("  code:", event.code);
+                console.log("  reason:", event.reason);
+                console.log("  wasClean:", event.wasClean);
+                console.log("  readyState:", socket.readyState);
+            };
+
+        }
+
+
+
+        function sendOfferMessage(sdp) {
+            const message = {
+                type: NavTalkMessageType.WEB_RTC_OFFER,
+                data: { sdp: sdp }
+            };
+            socket.send(JSON.stringify(message));
+        }
+        function sendAnswerMessage(sdp) {
+            const message = {
+                type: NavTalkMessageType.WEB_RTC_ANSWER,
+                data: { sdp: sdp }
+            };
+            socket.send(JSON.stringify(message));
+        }
+        function sendIceMessage(candidate) {
+            const message = {
+                type: NavTalkMessageType.WEB_RTC_ICE_CANDIDATE,
+                data: { candidate: candidate }
+            };
+            socket.send(JSON.stringify(message));
+        }
+
+        async function handleOffer(message) {
+            const offer = new RTCSessionDescription(message.sdp);
+            addConnectionLog('info', 'WebRTC Offer received', { sdp: isDetailedLogMode ? message.sdp : '...' });
+            
+            peerConnectionA = new RTCPeerConnection(configuration);
+
+            peerConnectionA.setRemoteDescription(offer)
+                .then(() => {
+                    addConnectionLog('info', 'WebRTC remote description set successfully');
+                    return peerConnectionA.createAnswer();
+                })
+                .then(answer => {
+                    addConnectionLog('info', 'WebRTC Answer created successfully');
+                    return peerConnectionA.setLocalDescription(answer);
+                })
+                .then(() => {
+                    addConnectionLog('info', 'WebRTC Answer sent');
+                    sendAnswerMessage(peerConnectionA.localDescription)
+                })
+                .catch(err => {
+                    console.error('Error handling offer:', err);
+                    addConnectionLog('error', 'Failed to handle WebRTC Offer: ' + err.message);
+                });
+
+            // Add ICE state monitoring
+            peerConnectionA.oniceconnectionstatechange = () => {
+                console.log('ICE connection state:', peerConnectionA.iceConnectionState);
+                addConnectionLog('info', `ICE connection state changed: ${peerConnectionA.iceConnectionState}`);
+                
+                if (peerConnectionA.iceConnectionState === 'connected') {
+                    console.log('WebRTC connection fully established!');
+                    addConnectionLog('success', 'WebRTC connection fully established');
+                } else if (peerConnectionA.iceConnectionState === 'failed') {
+                    console.log('ICE connection failed, attempting reconnection...');
+                    addConnectionLog('error', 'ICE connection failed, attempting reconnection');
+                    // You can add reconnection logic here
+                } else if (peerConnectionA.iceConnectionState === 'disconnected') {
+                    console.log('ICE connection disconnected, attempting reconnection...');
+                    addConnectionLog('warn', 'ICE connection disconnected, attempting reconnection');
+                    // You can add reconnection logic here
+                }
+            };
+            // Add ICE connection state monitoring
+            peerConnectionA.onnegotiationneeded = async () => {
+                console.log("onnegotiationneeded")
+                addConnectionLog('info', 'WebRTC negotiation needed');
+                const offer = await peerConnectionA.createOffer();
+                await peerConnectionA.setLocalDescription(offer);
+                sendOfferMessage(offer);
+            };
+            peerConnectionA.ontrack = (event) => {
+                console.log("ontrack", event);
+                addConnectionLog('success', 'Remote video track received', { streams: event.streams.length });
+
+                const remoteVideoA = document.getElementById('character-avatar-video');
+                const staticImage  = document.getElementById('character-static-image');
+                remoteVideoA.srcObject = event.streams[0];
+
+                const playWhenReady = () => {
+                    if (remoteVideoA.readyState >= 2) {
+                        remoteVideoA.play().then(() => {
+                            // Crossfade: fade in video, fade out static image
+                            remoteVideoA.classList.add('video-active');
+                            staticImage.classList.add('static-hidden');
+                            addConnectionLog('success', 'Video playback started');
+                        }).catch(e => {
+                            console.error("Video playback failed:", e);
+                            addConnectionLog('error', 'Video playback failed: ' + e.message);
+                        });
+                    } else {
+                        remoteVideoA.addEventListener('loadeddata', () => {
+                            remoteVideoA.play().then(() => {
+                                remoteVideoA.classList.add('video-active');
+                                staticImage.classList.add('static-hidden');
+                                addConnectionLog('success', 'Video playback started');
+                            }).catch(e => {
+                                console.error("Video playback failed:", e);
+                                addConnectionLog('error', 'Video playback failed: ' + e.message);
+                            });
+                        }, { once: true });
+                    }
+                };
+
+                playWhenReady();
+            };
+
+            // Logs when handling ICE Candidate
+            peerConnectionA.onicecandidate = (event) => {
+                console.log('onicecandidate:', event.candidate ? 'new candidate' : 'gathering complete');
+                if (event.candidate) {
+                    if (isDetailedLogMode) {
+                        addConnectionLog('info', 'ICE Candidate collected', { candidate: event.candidate.candidate });
+                    }
+                    sendIceMessage(event.candidate);
+                } else {
+                    addConnectionLog('info', 'ICE Candidate gathering complete');
+                }
+            };
+        }
+
+        // Function to handle Answer messages
+        function handleAnswer(message) {
+            const answer = new RTCSessionDescription(message.sdp);
+            peerConnectionA.setRemoteDescription(answer)
+                .catch(err => console.error('Failed to handle Answer:', err));
+
+        }
+
+        function handleIceCandidate(message) {
+            const candidate = new RTCIceCandidate(message.candidate);
+            console.log(candidate)
+            peerConnectionA.addIceCandidate(candidate)
+                .catch(err => console.error('Error adding ICE candidate:', err));
+        }
+
+        function showErrorTip(message) {
+            const realtimeButton = document.getElementById('btnRealtime');
+            if (realtimeButton.classList.contains('active')) {
+                realtimeButton.click();
+            }
+            const errorTip = document.getElementById("errorTipRealtime");
+            errorTip.textContent = message;
+            errorTip.style.display = "block";
+            errorTip.style.opacity = "1";
+            errorTip.style.visibility = "visible";
+            // Automatically hide error message after 3 seconds
+            setTimeout(() => {
+                errorTip.style.opacity = "0";
+                errorTip.style.visibility = "hidden";
+                setTimeout(() => {
+                    errorTip.style.display = "none";
+                }, 500);
+            }, 3000);
+        }
+
+        async function sendSessionUpdate() {
+            const history = localStorage.getItem("realtimeChatHistory");
+            const conversationHistory = history ? JSON.parse(history) : [];
+
+            let userLanguage = await getFromChromeStorage("userLanguage");
+
+            let activeCharacterLogId = await getFromChromeStorage("digitalHumanLogId");
+            let realtimeChatHistory = await getFromChromeStorage("realtimeChatHistory");
+            realtimeChatHistory = JSON.parse(realtimeChatHistory);
+
+
+            // Send each item in history
+            conversationHistory.forEach((msg) => {
+                const messageConfig = {
+                    type: "conversation.item.create",
+                    item: {
+                        type: "message",
+                        role: msg.role,
+                        content: [
+                            {
+                                type: msg.role === "user" ? "input_text" : "text",
+                                text: msg.content
+                            }
+                        ]
+                    }
+                };
+
+                try {
+                    if (msg.role === "user") {
+                        console.log("Sending message:", JSON.stringify(messageConfig));
+                        socket.send(JSON.stringify(messageConfig));
+                    }
+                } catch (e) {
+                    console.error("Error sending message:", e);
+                }
+            });
+        }
+
+        async function handleReceivedMessage(data) {
+            let activeCharacterLogId = await getFromChromeStorage("digitalHumanLogId");
+            let realtimeChatHistory = await getFromChromeStorage("realtimeChatHistory");
+            realtimeChatHistory = JSON.parse(realtimeChatHistory);
+            let nav_data = data.data;
+
+            switch (data.type) {
+                // ======================== connection start===================
+                case NavTalkMessageType.CONNECTED_FAIL:
+                case NavTalkMessageType.CONNECTED_CLOSE:
+                    const errorMessage = data.message || "Unknown error";
+                    console.log(`Connection error: ${errorMessage}`);
+                    addConnectionLog('error', 'Connection failed: ' + errorMessage);
+                    // Reset call state to initial when backend error occurs
+                    hangupCall();
+                    break;
+
+                case NavTalkMessageType.CONNECTED_SUCCESS:
+                    if (data.data && data.data.iceServers) {
+                        configuration.iceServers = data.data.iceServers
+                        console.log("NavTalkMessageType.CONNECTED_SUCCESS")
+                        console.log(configuration.iceServers)
+                        addConnectionLog('success', 'Connection successful', { 
+                            iceServers: isDetailedLogMode ? configuration.iceServers : '...' 
+                        });
+                    }
+                    //CONNECTED SUCCESS
+                    console.log("conversation.connected.success");
+                    console.log(configuration);
+                    break;
+                // Session created, send configuration
+                case NavTalkMessageType.REALTIME_SESSION_CREATED:
+                    console.log("Session created, sending session update.");
+                    addConnectionLog('info', 'Session created');
+                    await sendSessionUpdate();
+                    break;
+
+                // Session established after configuration
+                case NavTalkMessageType.REALTIME_SESSION_UPDATED:
+                    console.log("Session updated. Ready to receive audio.");
+                    addConnectionLog('success', 'Session updated, ready to receive audio');
+                    startRecording();
+                    break;
+                case NavTalkMessageType.INSUFFICIENT_BALANCE:
+                    console.log("INSUFFICIENT_BALANCE");
+                    addConnectionLog('error', 'Insufficient balance');
+                    // handleInsufficientBalance()
+                    break;
+                // ======================== connection end===================
+                // ======================== signaling exchange start===================
+                case NavTalkMessageType.WEB_RTC_OFFER: {
+                    addConnectionLog('info', 'Handling WebRTC Offer');
+                    handleOffer(data.data);
+                    break;
+                }
+                case NavTalkMessageType.WEB_RTC_ANSWER: {
+                    addConnectionLog('info', 'Handling WebRTC Answer');
+                    handleAnswer(data.data);
+                    break;
+                }
+                case NavTalkMessageType.WEB_RTC_ICE_CANDIDATE: {
+                    if (isDetailedLogMode) {
+                        addConnectionLog('info', 'Handling ICE Candidate');
+                    }
+                    handleIceCandidate(data.data);
+                    break;
+                }
+                // ======================== signaling exchange end===================
+                // ======================== Message start===================
+                // User starts speaking
+                case NavTalkMessageType.REALTIME_SPEECH_STARTED:
+                    console.log("Speech started detected by server.");
+                    addConnectionLog('info', 'User started speaking');
+                    stopCurrentAudioPlayback();
+                    audioQueue = [];
+                    isPlaying = false;
+                    playVideo = false;
+                    nextPlayTime = 0;
+                    // Stop AI lipsync on user interruption
+                    document.getElementById('lipsync-overlay').classList.remove('talking');
+                    document.getElementById('btnRealtime').classList.remove('speaking');
+                    pendingUserMessageSpan = createTypingPlaceholder();
+                    break;
+
+                // User stops speaking
+                case NavTalkMessageType.REALTIME_SPEECH_STOPPED:
+                    console.log("Speech stopped detected by server.");
+                    addConnectionLog('info', 'User stopped speaking');
+                    // User finished speaking, immediately create animated placeholder to ensure correct message order
+                    // pendingUserMessageSpan = createTypingPlaceholder();
+                    break;
+                // Full transcription of user speech
+                case NavTalkMessageType.REALTIME_CONVERSATION_ITEM_COMPLETED:
+                    console.log("Received transcription: " + data.transcript);
+                    if (nav_data && nav_data.content && nav_data.content.trim()) {
+                        addConnectionLog('info', 'User message transcription completed');
+                        // If placeholder exists, update its content; otherwise create new message
+
+                        if (pendingUserMessageSpan) {
+                            // Clear animation elements and replace with actual text
+                            pendingUserMessageSpan.innerHTML = '';
+                            pendingUserMessageSpan.classList.remove('typing-indicator');
+                            pendingUserMessageSpan.textContent = nav_data.content;
+                            pendingUserMessageSpan = null; // Clear reference
+                        } else {
+                            // No placeholder case (e.g., via text input)
+                            const userMessageContainer = document.createElement('div');
+                            userMessageContainer.classList.add('character-chat-item', 'item-user');
+
+                            const userMessage = document.createElement('span');
+                            userMessage.textContent = nav_data.content;
+                            userMessageContainer.appendChild(userMessage);
+
+                            const chatContent = document.querySelector('#messageHistoryContent .scroller');
+                            chatContent.appendChild(userMessageContainer);
+                            chatContent.scrollTop = chatContent.scrollHeight;
+                        }
+                        
+                        // Save to message history (message already rendered in chat)
+                        saveMessageToHistory("user", nav_data.content);
+                        await appendRealtimeChatHistory("user", nav_data.content);
+                    } else if (pendingUserMessageSpan) {
+                        // If the transcription is empty but contains placeholders, remove the placeholders.
+                        pendingUserMessageSpan.parentElement.parentElement.remove();
+                        pendingUserMessageSpan = null;
+                    }
+
+                    break;
+
+
+
+
+                // Response text stream
+                case NavTalkMessageType.REALTIME_RESPONSE_AUDIO_TRANSCRIPT_DELTA:
+                    playVideo = true;
+                    // Activate lip-sync overlay + speaking ring
+                    document.getElementById('lipsync-overlay').classList.add('talking');
+                    document.getElementById('btnRealtime').classList.add('speaking');
+                    {
+                    const transcript = nav_data.content;
+                    const responseId = nav_data.id;
+
+                    if (!markdownBuffer.has(responseId)) {
+                        markdownBuffer.set(responseId, "");
+                    }
+
+                    const existingBuffer = markdownBuffer.get(responseId);
+                    markdownBuffer.set(responseId, existingBuffer + transcript);
+
+                    let aiMessageSpan = responseSpans.get(responseId);
+
+                    if (!aiMessageSpan) {
+                        const aiMessageContainer = document.createElement('div');
+                        aiMessageContainer.classList.add('character-chat-item', 'item-character');
+
+                        aiMessageSpan = document.createElement('span');
+                        aiMessageSpan.classList.add('markdown-content');
+                        aiMessageContainer.appendChild(aiMessageSpan);
+
+                        const chatContainer = document.querySelector('#messageHistoryContent .scroller');
+                        chatContainer.appendChild(aiMessageContainer);
+
+                        responseSpans.set(responseId, aiMessageSpan);
+                    }
+
+                    const fullContent = markdownBuffer.get(responseId);
+                    aiMessageSpan.textContent = fullContent;
+
+                    const chatContainer2 = document.querySelector('#messageHistoryContent .scroller');
+                    chatContainer2.scrollTop = chatContainer2.scrollHeight;
+                    }
+                    break;
+
+                // Response audio stream
+                case NavTalkMessageType.REALTIME_RESPONSE_AUDIO_DELTA:
+                    if (data.delta) {
+                        // Handle audio delta
+                    }
+                    break;
+
+                // Full assistant transcription
+                case NavTalkMessageType.REALTIME_RESPONSE_AUDIO_TRANSCRIPT_DONE:
+                    console.log("Received transcription: " + nav_data.content);
+                    addConnectionLog('info', 'AI response completed');
+                    
+                    // Save to message history (message already rendered in chat)
+                    saveMessageToHistory("assistant", nav_data.content);
+                    await appendRealtimeChatHistory("assistant", nav_data.content);
+                    break;
+
+                // Response completed
+                case NavTalkMessageType.REALTIME_RESPONSE_AUDIO_DONE:
+                    console.log("Audio response complete.");
+                    addConnectionLog('info', 'Audio response completed');
+                    isPlaying = false;
+                    playVideo = false;
+                    // Stop lip-sync overlay and speaking ring
+                    document.getElementById('lipsync-overlay').classList.remove('talking');
+                    document.getElementById('btnRealtime').classList.remove('speaking');
+                    break;
+
+                // ======================== Message end===================
+                case NavTalkMessageType.CONNECTED_WARNING:
+                    console.log("Conected warning");
+                    addConnectionLog('warning', 'Conected warning',details={message:data.message});
+                    break;
+                default:
+                    console.warn("Unhandled event type: " + data.type);
+                    addConnectionLog('warn', 'Unhandled event type: ' + data.type);
+            }
+        }
+
+        function stopCurrentAudioPlayback() {
+            if (currentAudioSource) {
+                currentAudioSource.stop();
+                currentAudioSource = null;
+                console.log("Current audio playback stopped.");
+            }
+        }
+        function sendAudioMessage(chunk) {
+            if (!chunk || !socket || socket.readyState !== WebSocket.OPEN) {
+                console.warn("WebSocket not open or empty input.");
+                return;
+            }
+            socket.send(JSON.stringify({ type: NavTalkMessageType.REALTIME_INPUT_AUDIO_BUFFER_APPEND, data: { audio: chunk } }));
+        }
+
+        function startRecording() {
+            addConnectionLog('info', 'Starting recording');
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+                    audioStream = stream;
+                    const source = audioContext.createMediaStreamSource(stream);
+
+                    // Use smaller buffer (2048) for lower latency / smoother audio capture
+                    audioProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+
+                    audioProcessor.onaudioprocess = (event) => {
+                        if (socket && socket.readyState === WebSocket.OPEN) {
+                            const inputBuffer = event.inputBuffer.getChannelData(0);
+                            const pcmData = floatTo16BitPCM(inputBuffer);
+                            const base64PCM = base64EncodeAudio(new Uint8Array(pcmData));
+
+                            // Send in one chunk (buffer is already small)
+                            const chunkSize = 4096;
+                            for (let i = 0; i < base64PCM.length; i += chunkSize) {
+                                const chunk = base64PCM.slice(i, i + chunkSize);
+                                sendAudioMessage(chunk);
+                            }
+                        }
+                    };
+
+                    source.connect(audioProcessor);
+                    audioProcessor.connect(audioContext.destination);
+                    console.log("Recording started");
+                    addConnectionLog('success', 'Recording started');
+                })
+                .catch(error => {
+                    console.error("Unable to access microphone: ", error);
+                    addConnectionLog('error', 'Unable to access microphone: ' + error.message);
+                });
+        }
+
+        function floatTo16BitPCM(float32Array) {
+            const buffer = new ArrayBuffer(float32Array.length * 2);
+            const view = new DataView(buffer);
+            let offset = 0;
+            for (let i = 0; i < float32Array.length; i++, offset += 2) {
+                let s = Math.max(-1, Math.min(1, float32Array[i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+            }
+            return buffer;
+        }
+
+        function base64EncodeAudio(uint8Array) {
+            let binary = '';
+            const chunkSize = 0x8000; // Keep 32KB chunk size
+            for (let i = 0; i < uint8Array.length; i += chunkSize) {
+                const chunk = uint8Array.subarray(i, i + chunkSize);
+                binary += String.fromCharCode.apply(null, chunk);
+            }
+            return btoa(binary);
+        }
+
+        // Create animated user message placeholder
+        function createTypingPlaceholder() {
+            const userMessageContainer = document.createElement('div');
+            userMessageContainer.classList.add('character-chat-item', 'item-user');
+
+            const userMessage = document.createElement('span');
+            userMessage.classList.add('typing-indicator');
+
+            // Create three bouncing dots
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('span');
+                dot.classList.add('typing-dot');
+                userMessage.appendChild(dot);
+            }
+
+            userMessageContainer.appendChild(userMessage);
+
+            const chatContent = document.querySelector('#messageHistoryContent .scroller');
+            chatContent.appendChild(userMessageContainer);
+            chatContent.scrollTop = chatContent.scrollHeight;
+
+            return userMessage;
+        }
+
+        function stopRecording() {
+            addConnectionLog('info', 'Stopping recording');
+            if (audioProcessor) {
+                audioProcessor.disconnect();
+            }
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+            }
+            if (socket) {
+                socket.close();
+            }
+        }
+
+        // Function to hangup call and reset state
+        function hangupCall() {
+            addConnectionLog('info', 'Hanging up call and resetting state');
+            
+            const realtimeButton = document.getElementById('btnRealtime');
+            const staticImage = document.getElementById('character-static-image');
+            const videoElement = document.getElementById('character-avatar-video');
+            const conversationBg = document.querySelector('.conversation-bg');
+            const lipsyncOverlay = document.getElementById('lipsync-overlay');
+            
+            stopRecording();
+            
+            if (realtimeButton && realtimeButton.classList.contains('active')) {
+                realtimeButton.classList.remove('active');
+            }
+            realtimeButton.classList.remove('speaking');
+            
+            if (conversationBg) conversationBg.style.display = 'none';
+            
+            // Crossfade back to static image
+            if (videoElement) {
+                videoElement.classList.remove('video-active');
+                videoElement.pause();
+            }
+            if (staticImage) staticImage.classList.remove('static-hidden');
+            
+            // Hide lipsync overlay
+            if (lipsyncOverlay) lipsyncOverlay.classList.remove('talking');
+            
+            audioQueue = [];
+            isPlaying = false;
+            nextPlayTime = 0;
+            
+            document.querySelectorAll('.character-chat-item').forEach(item => {
+                item.style.display = 'none';
+            });
+            
+            addConnectionLog('info', 'Call ended and state reset complete');
+        }
+
+
+        // Gapless audio scheduler
+        let nextPlayTime = 0;
+
+        // Play the next audio segment and synchronize lip movement
+        function playNextAudio() {
+            if (audioQueue.length > 0) {
+                isPlaying = true;
+                const audioData = audioQueue.shift();
+                playPCM(audioData, playNextAudio);
+            } else {
+                isPlaying = false;
+            }
+        }
+
+        function playPCM(pcmBuffer, callback) {
+            const wavBuffer = createWavBuffer(pcmBuffer, 24000);
+            audioContext.decodeAudioData(wavBuffer, function (audioBuffer) {
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+
+                // Schedule back-to-back for gapless playback
+                const now = audioContext.currentTime;
+                if (nextPlayTime < now) nextPlayTime = now;
+                source.start(nextPlayTime);
+                nextPlayTime += audioBuffer.duration;
+
+                source.onended = callback;
+                currentAudioSource = source;
+            }, function (error) {
+                console.error("Error decoding audio data", error);
+                callback();
+            });
+        }
+
+        function createWavBuffer(pcmBuffer, sampleRate) {
+            const wavHeader = new ArrayBuffer(44);
+            const view = new DataView(wavHeader);
+
+            // RIFF header
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcmBuffer.byteLength, true); // Chunk size
+            writeString(view, 8, 'WAVE');
+
+            // fmt subchunk
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true); // Subchunk1 size (16 for PCM)
+            view.setUint16(20, 1, true);  // Audio format (1 for PCM)
+            view.setUint16(22, 1, true);  // Number of channels (1 for mono)
+            view.setUint32(24, sampleRate, true); // Sample rate
+            view.setUint32(28, sampleRate * 2, true); // Byte rate (Sample Rate * Block Align)
+            view.setUint16(32, 2, true);  // Block align (Channels * Bits per sample / 8)
+            view.setUint16(34, 16, true); // Bits per sample
+
+            // data subchunk
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcmBuffer.byteLength, true); // Subchunk2 size
+
+            function writeString(view, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            }
+
+            return concatenateBuffers(wavHeader, pcmBuffer);
+        }
+
+        function concatenateBuffers(buffer1, buffer2) {
+            const tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+            tmp.set(new Uint8Array(buffer1), 0);
+            tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
+            return tmp.buffer;
+        }
+
+        realtimeButton.addEventListener('click', async function () {
+            if (realtimeButton.classList.contains('active')) {
+                hangupCall();
+            } else {
+                addConnectionLog('info', 'User started call');
+                realtimeButton.classList.add('active');
+                startWebSocket();
+
+                if (conversationBg) conversationBg.style.display = 'block';
+
+                // Video element is already in DOM with opacity:0; it will crossfade in via ontrack
+                // No need to toggle display here
+
+                addConnectionLog('info', 'Waiting for video stream...');
+
+                document.querySelectorAll('.character-chat-item').forEach(item => {
+                    item.style.display = 'block';
+                });
+            }
+        });
+
+        async function appendRealtimeChatHistory(role, content) {
+            let history = localStorage.getItem("realtimeChatHistory");
+            let realtimeChatHistory = history ? JSON.parse(history) : [];
+
+            realtimeChatHistory.push({ role, content });
+
+            localStorage.setItem("realtimeChatHistory", JSON.stringify(realtimeChatHistory));
+        }
+    }
+
+    initDigtalHumanRealtimeButton();
+
+</script>
+</html>
